@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Caterium / Public Engineering Workspace",
-  description: "A synthetic, inspectable order lifecycle workspace.",
+  title: "Caterium — Public Demo",
+  description: "Explore Caterium with simulated orders and a fictional portfolio.",
+  icons: { icon: "/caterium-logo.png" },
 };
 
 export default function RootLayout({

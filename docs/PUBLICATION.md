@@ -4,6 +4,8 @@
 
 This repository is newly authored using generic engineering patterns. It has no private Git ancestry and no copied private datasets, source implementations, migration history, production configuration, reports, credentials, or personal records.
 
+The original Caterium logo is included with the owner's explicit approval. Its pixels are unchanged; embedded text and EXIF metadata have been removed. No other private assets are included.
+
 The public scope is a local synthetic order-lifecycle demonstration. It cannot execute a real trade. Broader equities and prediction-market workflows are described only at the architecture level; proprietary implementations remain excluded.
 
 ## Review before sharing

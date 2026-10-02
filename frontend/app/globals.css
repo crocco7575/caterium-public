@@ -38,17 +38,11 @@ body {
   font-weight: 800;
   letter-spacing: 0.16em;
 }
-.brand-mark {
-  width: 29px;
-  height: 29px;
-  display: grid;
-  place-items: center;
-  background: var(--navy);
-  color: #fff;
-  border-radius: 50%;
-  font-family: Georgia;
-  font-size: 17px;
-  font-style: italic;
+.brand-logo {
+  width: 58px;
+  height: auto;
+  display: block;
+  flex-shrink: 0;
 }
 .brand-slash {
   color: var(--teal);

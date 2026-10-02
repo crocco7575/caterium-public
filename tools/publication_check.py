@@ -71,7 +71,10 @@ def inspect(path: Path, root: Path) -> list[str]:
     if path.stat().st_size > 2_000_000:
         issues.append("large artifact needs publication review")
     if path.suffix == ".png":
-        if relative.parent != Path("docs/assets"):
+        if (
+            relative.parent != Path("docs/assets")
+            and relative != Path("frontend/public/caterium-logo.png")
+        ):
             issues.append("binary image outside documented demo assets")
         return issues
     try:

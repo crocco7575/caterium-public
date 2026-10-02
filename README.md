@@ -1,10 +1,12 @@
 <p align="center">
-  <img src="docs/assets/caterium-banner.svg" alt="Caterium — a financial systems engineering demo" width="100%" />
+  <img src="frontend/public/caterium-logo.png" alt="Caterium" width="220" />
 </p>
 
+<h1 align="center">Caterium</h1>
+
 <p align="center">
-  <strong>Follow an order from API request to portfolio update.</strong><br />
-  Typed boundaries. Transactional state. A live view of what happened.
+  Research, test, and monitor trading strategies.<br />
+  Equities &amp; prediction markets, including Kalshi.
 </p>
 
 <p align="center">
@@ -17,13 +19,9 @@
 
 ---
 
-Caterium is a financial technology platform for researching, testing, monitoring, and operating systematic investment strategies.
+**A public demo of Caterium's trading platform.** Place simulated orders, follow their progress, and see a portfolio update.
 
-The broader platform spans **equities and prediction-market workflows, including Kalshi**. This public slice demonstrates their shared systems-engineering concerns with an equities-style mock order lifecycle. It does **not** implement an exchange adapter, binary-contract settlement, or a live trading system.
-
-**This repository is a sanitized engineering demonstration of portions of Caterium's platform architecture.** Proprietary research, production strategies, execution logic, credentials, datasets, and internal infrastructure have intentionally been excluded. The public implementation is newly authored around generic architectural patterns; it is not a production source-code export.
-
-Every balance, instrument, order, and fill here is **synthetic**. `MockBroker` cannot submit a real order. `ExampleStrategy` is a constant demonstration action, not an investment strategy.
+The demo currently uses fictional equities. Kalshi-specific markets and settlement are not implemented. All data is synthetic; private strategies, research, execution logic, credentials, infrastructure, and real results are excluded. Nothing here places real trades.
 
 ![Running Caterium public dashboard with synthetic orders and balances](docs/assets/dashboard.png)
 

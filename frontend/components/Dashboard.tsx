@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api, ApiError, orderIntent } from "../lib/api";
 import type { DashboardData, Order, SymbolCode, Side } from "../lib/types";
@@ -190,7 +191,15 @@ export default function Dashboard() {
     <main className="shell">
       <header className="topbar">
         <div className="brand">
-          <span className="brand-mark">C</span>
+          <Image
+            src="/caterium-logo.png"
+            alt="Caterium"
+            width={632}
+            height={388}
+            sizes="58px"
+            className="brand-logo"
+            unoptimized
+          />
           <span>
             CATERIUM<span className="brand-slash">/</span>PUBLIC
           </span>
@@ -217,10 +226,9 @@ export default function Dashboard() {
             ENGINEERING WORKSPACE <span>•</span> ACCOUNT{" "}
             {data?.account.id ?? "demo-account"}
           </p>
-          <h1>Observe the whole order lifecycle.</h1>
+          <h1>Follow every order.</h1>
           <p className="lede">
-            A compact public surface for inspecting reservation, validation, and
-            fill mechanics.
+            Place simulated trades and watch your demo portfolio update.
           </p>
         </div>
         <div className="connection">
