@@ -26,7 +26,9 @@ uv run python -m app.init_db
 uv run uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 
-The default SQLite demo file is local and ignored by Git. Initialization runs Alembic and creates the fictional account idempotently. It does not import anything.
+The default SQLite demo file is local and ignored by Git. Initialization runs Alembic and creates the fictional equity and prediction accounts and markets idempotently. It does not import anything. Run initialization again after updating the source to apply new public-demo migrations without resetting existing balances.
+
+Prediction settlement is deliberately permanent within that demo database. To start a separate clean scenario, stop the API and point `DATABASE_URL` at a new local SQLite filename, then run initialization. Keep the original database if you want to preserve its history; no reset or deletion is needed.
 
 **Terminal 2 — frontend:**
 

@@ -1,6 +1,30 @@
 # Local verification record
 
-Verified on **2026-10-02**. This records checks actually executed during the public demo build, not hosted CI results or production guarantees.
+Verified on **2026-10-02**. This records checks actually executed during the public demo build, not production guarantees.
+
+## Equities and prediction-market expansion
+
+The updated application was rechecked locally with both workspaces enabled:
+
+| Check | Observed result |
+| --- | --- |
+| Backend tests | **32 passed, 5 skipped**; **97% statement coverage** |
+| Backend static checks | Ruff lint, formatting, and strict mypy passed |
+| Prediction accounting | YES/NO payouts, cash reservations, fill/cancel retries, settlement rollback, closed-market rejection, stale-object refresh, and independent equity balance checked |
+| Persistence | Upgrade preserved pre-existing equity data; downgrade/reupgrade and Alembic schema check passed on disposable SQLite databases; reseeding preserved settled state |
+| Frontend | **16 tests passed**; ESLint, TypeScript, and production build passed |
+| Browser retry | Deliberately lost the successful order response, then clicked retry: identical key and payload, one order, one cash reservation |
+| Browser rejection | Simulated definitive HTTP 409 cleared the pending intent and unlocked the ticket; no fake success |
+| Browser settlement | Bought/filled YES and NO positions, settled both fictional outcomes, observed winner/loser payouts and automatic cancellation of an open order |
+| Browser isolation | Prediction settlement left the previously filled equity order and equity-account cash unchanged |
+| Presentation | Original logo loaded; prediction payout history remained visible; no horizontal overflow at 390px |
+| Compose | Configuration validation passed; no container engine started |
+
+The five PostgreSQL-only checks were skipped locally. Their hosted results must be checked in the matching GitHub Actions run; SQLite does not prove PostgreSQL locking behavior. These checks use only isolated synthetic data, not the trading server or either provider's account. Browser screenshots are generated from the local demo. The broader platform description is not a claim that private Alpaca/Kalshi adapters or research engines ship in this repository.
+
+## Initial equities-only verification
+
+The following records the earlier baseline and its additional publication/dependency checks; counts here are historical, not the expanded suite's current counts.
 
 | Check | Observed result |
 | --- | --- |

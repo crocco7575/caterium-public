@@ -56,6 +56,14 @@
 
 **Tradeoff:** authentication and authorization are intentionally absent. The application must not be internet-exposed or repurposed for real money without substantial additional engineering.
 
+## 8. Separate prediction-market accounting
+
+**Decision:** add an independent fictional YES/NO workspace rather than treating binary contracts as ordinary equity symbols. Keep fixed quotes, explicit full fills, and manual settlement; omit early sales and fees.
+
+**Why:** a winning contract pays a fixed amount and disappears from open portfolio value. Recording outcome, cost basis, payout, pending-order cancellation, and cash together makes those semantics reviewable. Separate demo balances avoid implying a shared Alpaca/Kalshi funding or margin arrangement.
+
+**Tradeoff:** this illustrates settlement accounting, not either provider's API, market mechanics, or profitability. Choosing an outcome makes the displayed gain/loss entirely synthetic. Prediction updates use lightweight visible-tab refreshes; the existing equities SSE channel stays independent.
+
 ## Interview guide
 
 Useful questions to explore in the source:
@@ -65,5 +73,6 @@ Useful questions to explore in the source:
 - Why reserve resources when an order is submitted instead of when it fills?
 - Where do API validation and business validation differ?
 - What does a test with SQLite prove—and what does it not prove?
-- How would this change for multiple accounts, real brokers, or binary-contract settlement?
+- How does settlement remain safe when a fill or another settlement races it?
+- How would this change for multiple users, real brokers, partial fills, or fees?
 - Which operational controls would be required before any production use?

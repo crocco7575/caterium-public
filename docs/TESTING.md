@@ -26,6 +26,11 @@ Important invariants include:
 - Terminal states cannot be crossed through an incompatible operation.
 - Malformed input is distinguishable from a persisted business-rule rejection.
 - Events preserve cursor order and SSE framing without retaining a database session while waiting.
+- YES and NO holdings settle to the correct fixed payout without double-counting portfolio value.
+- Settlement cancels open orders and releases reservations atomically, including markets with no filled holdings.
+- Repeated settlement cannot pay twice; a conflicting outcome or post-settlement order fails.
+- Prediction activity cannot change the equity account or its holdings.
+- Restart/bootstrap preserves both balances and settled outcomes.
 
 ### SQLite versus PostgreSQL
 
@@ -47,6 +52,8 @@ npm run build
 ```
 
 A successful build is not a browser test. The verification record separately reports the actual local browser flow and any limits. For a manual check, submit → fill → inspect the position, submit → cancel → inspect released funds, and try an unsupported sale. Open a second tab to observe event-driven refresh. Stop the backend to check that the UI does not pretend stale data is a healthy connection.
+
+Also switch to Prediction markets: submit YES and NO contracts, fill one, leave another pending, choose a simulated result, and inspect payout and released cash. Refresh and verify settlement is preserved. Repeat with the other fictional market/outcome to check a losing position. Confirm the equity balance is unchanged. Use a fresh disposable database for another scenario rather than resetting stored history.
 
 ## Publication hygiene
 

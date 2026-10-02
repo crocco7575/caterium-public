@@ -6,7 +6,7 @@ This repository is newly authored using generic engineering patterns. It has no 
 
 The original Caterium logo is included with the owner's explicit approval. Its pixels are unchanged; embedded text and EXIF metadata have been removed. No other private assets are included.
 
-The public scope is a local synthetic order-lifecycle demonstration. It cannot execute a real trade. Broader equities and prediction-market workflows are described only at the architecture level; proprietary implementations remain excluded.
+The public scope is a local synthetic equities and prediction-market demonstration. It cannot execute a real trade. The broader Caterium platform includes an equities brokerage layer built on Alpaca and prediction-market tools for Kalshi; neither provider's production integration is included here. The YES/NO example uses fictional markets, fixed prices, no fees, and user-selected outcomes. Proprietary implementations remain excluded.
 
 ## Review before sharing
 
@@ -23,7 +23,7 @@ Public sharing was explicitly approved after the local review. The public source
 
 ## Application security boundary
 
-This is **not an internet-facing financial application**. It has a single shared synthetic account and no authentication, authorization, account isolation, TLS termination, production audit system, rate limiting service, or financial custody controls. Local demo resources can be mutated by processes that can reach the backend. Do not add real funds or credentials.
+This is **not an internet-facing financial application**. It has two fixed synthetic accounts (equities and prediction markets) and no authentication, authorization, user/tenant isolation, TLS termination, production audit system, rate limiting service, or financial custody controls. The two balances are separate for demonstration purposes, not protected as distinct users' accounts. Local demo resources can be mutated by processes that can reach the backend. Do not add real funds or credentials.
 
 Loopback host bindings and a constrained frontend proxy reduce accidental exposure; they do not make a hostile environment safe. Likewise, a passed secret scan cannot prove absence of intellectual property. Human review remains necessary.
 

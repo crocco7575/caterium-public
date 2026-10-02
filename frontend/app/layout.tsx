@@ -3,7 +3,8 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Caterium — Public Demo",
-  description: "Explore Caterium with simulated orders and a fictional portfolio.",
+  description:
+    "Explore Caterium's equities brokerage and Kalshi-style prediction markets with simulated orders, portfolios, and settlement.",
   icons: { icon: "/caterium-logo.png" },
 };
 

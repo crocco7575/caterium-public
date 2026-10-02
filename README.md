@@ -5,8 +5,8 @@
 <h1 align="center">Caterium</h1>
 
 <p align="center">
-  Research, test, and monitor trading strategies.<br />
-  Equities &amp; prediction markets, including Kalshi.
+  An Alpaca-based equities brokerage and Kalshi trading workspace.<br />
+  Backtest ideas. Paper trade. Track orders, portfolios, and performance.
 </p>
 
 <p align="center">
@@ -19,13 +19,28 @@
 
 ---
 
-**A public demo of Caterium's trading platform.** Place simulated orders, follow their progress, and see a portfolio update.
+**Caterium combines an Alpaca-based equities brokerage with Kalshi prediction-market research and trading tools.** It backtests strategy ideas, runs paper-trading experiments, tracks orders and fills, and monitors positions, P&L, strategy performance, and system health.
 
-The demo currently uses fictional equities. Kalshi-specific markets and settlement are not implemented. All data is synthetic; private strategies, research, execution logic, credentials, infrastructure, and real results are excluded. Nothing here places real trades.
+**This repository is the public engineering demo—not the full platform.** Try equities orders, YES/NO contracts, portfolio updates, and settlement using fictional data. The demo does not connect to Alpaca or Kalshi; production adapters, backtesting and research engines, private strategies, credentials, execution logic, and real results stay private.
 
 ![Running Caterium public dashboard with synthetic orders and balances](docs/assets/dashboard.png)
 
 <sub>Captured from the running local demo after a mock fill and cancellation. All visible data is synthetic.</sub>
+
+### Two workspaces
+
+| Equities | Prediction markets |
+| --- | --- |
+| Brokerage-style BUY/SELL orders | Kalshi-style YES/NO contracts |
+| Reserve cash or shares; fill or cancel | Reserve cash; fill or cancel |
+| Track holdings and order events | Choose a fictional outcome and see settlement |
+| $10,000 fictional starting balance | Separate $1,000 fictional starting balance |
+
+These are independent demo balances, not connected accounts. The prediction-market example is deliberately simplified: fixed prices, buy-only contracts, no fees, and manual outcomes—not a replica of either provider's API or execution rules.
+
+![Kalshi-style prediction-market demo with fictional contracts and settlement](docs/assets/prediction-markets.png)
+
+<sub>The prediction workspace after a manually chosen outcome. All prices, balances, and P&L are synthetic.</sub>
 
 ## At a glance
 
@@ -33,7 +48,7 @@ The demo currently uses fictional equities. Kalshi-specific markets and settleme
 | --- | --- |
 | **Interface** | Next.js / React / TypeScript dashboard; real API state, accessible forms, streamed events |
 | **API** | FastAPI, Pydantic request validation, versioned routes, idempotent mutations |
-| **Domain** | Explicit order lifecycle, cash and inventory reservations, mock fills and portfolio updates |
+| **Domain** | Equity orders, YES/NO contracts, cash and inventory reservations, mock fills, and atomic settlement |
 | **Persistence** | SQLAlchemy 2, PostgreSQL, Alembic migrations, transactional domain events |
 | **Verification** | pytest, isolated databases, Ruff, mypy, ESLint, TypeScript, CI jobs |
 | **Development** | Docker Compose, locked dependencies, synthetic fixtures, no brokerage account required |
@@ -55,7 +70,7 @@ git clone https://github.com/crocco7575/caterium-public.git
 cd caterium-public
 ```
 
-Compose starts PostgreSQL, applies the schema migration, seeds one synthetic account, and starts the API and dashboard. The `.env.example` values are deliberately fake local defaults; no configuration or real credentials are required. Ports bind to loopback, and the database has no published port.
+Compose starts PostgreSQL, applies the schema migrations, seeds two separate synthetic accounts, and starts the API and dashboard. The `.env.example` values are deliberately fake local defaults; no configuration or real credentials are required. Ports bind to loopback, and the database has no published port.
 
 To stop while keeping your demo data:
 
@@ -74,7 +89,15 @@ Prefer not to run containers? See the [two-terminal setup](docs/DEVELOPMENT.md) 
 5. **Run ExampleStrategy**. It proposes one fixed demonstration order through the same validation path.
 6. **Watch the event stream** in another tab. Reconnects replay committed events with monotonically increasing IDs.
 
-There are no invented trading returns or simulated profitability charts. The dashboard shows operational state, not evidence of an investment edge.
+Then switch to **Prediction markets**:
+
+1. Buy 10 YES contracts for the fictional rocket launch at 40¢ each. The demo reserves $4.
+2. Fill the order. Your cash decreases by $4 and you hold 10 contracts.
+3. Submit another order without filling it, then simulate a YES outcome.
+4. Settlement cancels the pending order, releases its reservation, and pays $10 for the winning holdings. The $6 gain is fictional arithmetic, not a trading result.
+5. Refresh: the outcome and payout persist. Retrying settlement cannot pay twice.
+
+Choose NO instead to see a losing YES position, or buy NO contracts to explore the other side. Settlement is final for that fictional market; a restart does not reset it. All displayed P&L is synthetic and manually determined—not evidence of an investment edge.
 
 ## Architecture
 
@@ -85,13 +108,15 @@ flowchart LR
     API --> Service[Order and portfolio services]
     Example[ExampleStrategy interface] --> Service
     Service --> Broker["MockBroker<br/>fixed synthetic quotes"]
+    API --> Prediction["YES/NO orders and settlement<br/>separate demo account"]
+    Prediction -->|one transaction| DB
     Service -->|one transaction| DB[("PostgreSQL<br/>orders · cash · positions · events")]
     DB --> Stream[Bounded event reader]
     Stream -->|SSE + heartbeat| Proxy
     Proxy -->|live updates| UI
 ```
 
-The backend owns the state machine. The frontend does not infer fills or recalculate authoritative balances. Domain events are persisted alongside mutations; SSE is a transport for those committed records, not a second source of truth.
+The backend owns both state machines. The frontend does not infer fills or recalculate authoritative balances. Equities events are streamed through SSE; prediction-market activity refreshes from persisted state after actions and periodically while visible.
 
 ### Engineering highlights
 
@@ -99,6 +124,7 @@ The backend owns the state machine. The frontend does not infer fills or recalcu
 - **Funds are reserved before execution.** Submitting multiple orders cannot spend the same available balance. Sell submissions reserve inventory rather than permitting accidental shorting.
 - **Atomic portfolio changes.** Fills update the order, cash, holdings, and events within one database transaction.
 - **Explicit terminal states.** Fill and cancel operations have defined retry behavior. Invalid transitions do not silently mutate holdings.
+- **Settlement without double payment.** Resolving a fictional market cancels its open orders, releases cash, records the result, and credits winning holdings in one transaction. Repeated outcomes cannot pay twice; conflicting outcomes fail.
 - **Replaceable boundaries, one honest implementation.** Strategy and broker interfaces are present; only an intentionally trivial example and a mock provider ship.
 - **Observable by construction.** Durable events drive the activity log and resumable SSE feed; heartbeat messages distinguish a quiet stream from a disconnected one.
 
@@ -108,7 +134,7 @@ Read [the architecture](docs/ARCHITECTURE.md) for transaction boundaries and [th
 
 Backend tests exercise the HTTP boundary, service behavior, persistence, and failure paths against isolated synthetic data. Frontend checks validate lint, types, and the production build. CI also uses an isolated PostgreSQL service.
 
-**Local verification:** 18 backend tests passed with 95% statement coverage; 8 frontend proxy tests passed. Three PostgreSQL-only concurrency tests were skipped locally. See the [dated verification record](docs/VERIFICATION.md) for commands, scope, and limitations.
+See the [dated verification record](docs/VERIFICATION.md) for measured test results, browser checks, and limitations. PostgreSQL locking checks are separate from the fast SQLite suite.
 
 ```bash
 cd backend

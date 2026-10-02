@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api, ApiError, orderIntent } from "../lib/api";
 import type { DashboardData, Order, SymbolCode, Side } from "../lib/types";
+import PredictionDashboard from "./PredictionDashboard";
 
 const money = (value?: string) =>
   value
@@ -16,7 +17,7 @@ const time = (value: string) =>
     second: "2-digit",
   }).format(new Date(value));
 
-export default function Dashboard() {
+function EquitiesDashboard({ onPrediction }: { onPrediction: () => void }) {
   const [data, setData] = useState<DashboardData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -204,6 +205,10 @@ export default function Dashboard() {
             CATERIUM<span className="brand-slash">/</span>PUBLIC
           </span>
         </div>
+        <nav className="platform-tabs" aria-label="Demo platform">
+          <button className="active">Equities</button>
+          <button onClick={onPrediction}>Prediction markets</button>
+        </nav>
         <div className="top-meta">
           <span className="live-dot" /> DEMO ENVIRONMENT{" "}
           <span className="top-version">v0.1</span>
@@ -228,7 +233,8 @@ export default function Dashboard() {
           </p>
           <h1>Follow every order.</h1>
           <p className="lede">
-            Place simulated trades and watch your demo portfolio update.
+            Explore Alpaca-style brokerage workflows with simulated orders and a
+            fictional portfolio.
           </p>
         </div>
         <div className="connection">
@@ -581,6 +587,43 @@ export default function Dashboard() {
           ALL OUTPUTS SYNTHETIC <i>•</i> NO BROKER CONNECTION
         </span>
       </footer>
+    </main>
+  );
+}
+
+export default function Dashboard() {
+  const [tab, setTab] = useState<"equities" | "prediction">("equities");
+  if (tab === "equities")
+    return <EquitiesDashboard onPrediction={() => setTab("prediction")} />;
+  return (
+    <main className="shell">
+      <header className="topbar">
+        <div className="brand">
+          <Image
+            src="/caterium-logo.png"
+            alt="Caterium"
+            width={632}
+            height={388}
+            sizes="58px"
+            className="brand-logo"
+            unoptimized
+          />
+          <span>
+            CATERIUM<span className="brand-slash">/</span>PUBLIC
+          </span>
+        </div>
+        <nav className="platform-tabs" aria-label="Demo platform">
+          <button onClick={() => setTab("equities")}>Equities</button>
+          <button className="active" aria-current="page">
+            Prediction markets
+          </button>
+        </nav>
+        <div className="top-meta">
+          <span className="live-dot" /> DEMO ENVIRONMENT{" "}
+          <span className="top-version">v0.1</span>
+        </div>
+      </header>
+      <PredictionDashboard />
     </main>
   );
 }

@@ -2,7 +2,7 @@
 
 ## Scope
 
-This newly authored public demo illustrates generic patterns from a broader equities and prediction-market platform. It is not a release of either production system. Two fictional instruments and a single synthetic account keep the example inspectable; no private source, datasets, strategies, or execution behavior are required.
+This newly authored public demo illustrates generic patterns from Caterium's equities brokerage layer built on Alpaca and its prediction-market tools for Kalshi. It is not a release of either integration. Two fictional equities, two fictional YES/NO markets, and two separate synthetic accounts keep the example inspectable; no private source, datasets, strategies, or execution behavior are required.
 
 ## Components
 
@@ -12,6 +12,7 @@ This newly authored public demo illustrates generic patterns from a broader equi
 | Same-origin proxy | Forward allowlisted API routes; carry SSE | Arbitrary upstream URLs |
 | FastAPI routes | Validate inputs and map service errors to HTTP | Strategy decisions or browser state |
 | Order service | Enforce transitions, reserve resources, commit accounting | Real exchange connectivity |
+| Prediction service | Buy YES/NO contracts, reserve cash, settle fictional outcomes once | Real markets, exchange rules, research or fees |
 | Strategy interface | Produce a request compatible with the service | Private models or signals |
 | MockBroker | Fixed fictional prices for explicit full fills | Market microstructure or realistic execution |
 | PostgreSQL | Orders, account, inventory, durable event log | In-memory UI projections |
@@ -41,13 +42,25 @@ A submission serializes access to the synthetic account on PostgreSQL, validates
 
 For BUY orders, available cash is `cash − reserved_cash`. For SELL orders, available inventory is `quantity − reserved_quantity`. The demo permits neither borrowing nor shorting. Decimal arithmetic and fixed-point columns represent money; floats are not the accounting model.
 
-Serializing on a single account is intentionally conservative. It makes correctness visible but is not a high-throughput execution design. SQLite is a local convenience and test option; it does not provide PostgreSQL row-lock semantics.
+Serializing mutations on their demo account is intentionally conservative. Equity and prediction balances are separate; this is not a shared-margin portfolio. It makes correctness visible but is not a high-throughput execution design. SQLite is a local convenience and test option; it does not provide PostgreSQL row-lock semantics.
+
+## Prediction-market settlement
+
+The prediction workspace has a separate $1,000 synthetic account and its own market, order, fill, position, and event records. Only purchases are supported. Quotes are authored constants; the browser cannot supply a fill price.
+
+An OPEN market accepts YES or NO purchases. Submission reserves cash, an explicit full fill deducts the cost and adds contracts, and cancellation releases the reservation. The user then chooses a fictional result. In one transaction, settlement cancels all pending orders for that market, releases their cash, pays $1 per winning contract and zero per losing contract, records the outcome, and emits durable events.
+
+Market settlement is final. Repeating the same result returns the existing result without paying again; a different result is a conflict. Filled holdings retain their quantity, cost basis, and payout for inspection, but settled contracts have zero remaining market value. Equity is cash plus the fixed-quote value of open holdings, so payouts are not counted twice. Realized demo P&L is settled payout minus settled cost basis.
+
+The account lock serializes submission, filling, cancellation, and settlement. A concurrent fill either completes before settlement and is paid accordingly, or loses the race and cannot fill a cancelled/closed order. This accounting example is not an implementation of Kalshi's matching engine, fees, lifecycle timing, or exchange API.
 
 ## Events and reconnects
 
 Events commit with the state they describe. The SSE endpoint reads small, ordered batches using a cursor and releases each database session before waiting. Domain messages carry persisted numeric IDs; heartbeat messages do not. Clients can reconnect with `Last-Event-ID`, deduplicate repeated IDs, and refresh a dashboard snapshot.
 
 This is an at-least-once presentation channel, not an exactly-once message bus. The demo has no independent outbox publisher, external event broker, durable subscriber offsets, event-retention policy, or multi-account ordering guarantee. In particular, this design should not be extrapolated to concurrent multi-account production streams without addressing commit-order versus sequence-order behavior.
+
+The SSE channel belongs to the equities demo. Prediction events are a separate persisted log; that workspace refreshes its dashboard after mutations and periodically while visible. It does not claim a shared event sequence or real-time exchange feed.
 
 ## Deployment and trust boundary
 
@@ -57,4 +70,4 @@ The backend intentionally has no authentication or tenant isolation because this
 
 ## Fresh persistence history
 
-Alembic contains a new public-only schema history. The private migration chain and private Git history are not included. Startup initializes only the fictional demo account; there is no data import or external synchronization job.
+Alembic contains a new public-only schema history. The prediction-market migration adds tables without replacing the equity ledger. The private migration chain and private Git history are not included. Bootstrap creates the fictional accounts and markets idempotently; restarts do not reset balances or reopen settled markets. There is no data import or external synchronization job.

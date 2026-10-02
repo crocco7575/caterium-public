@@ -38,6 +38,9 @@ def seed(db: Session) -> None:
     )
     db.execute(statement.on_conflict_do_nothing(index_elements=[Account.id]))
     db.commit()
+    from app.prediction_service import seed as seed_prediction
+
+    seed_prediction(db)
 
 
 @contextmanager

@@ -13,6 +13,9 @@ const ALLOWED_PATHS = new Set([
   "events/stream",
   "strategies",
   "strategies/example/run",
+  "prediction/dashboard",
+  "prediction/markets",
+  "prediction/orders",
 ]);
 
 export function allowedPath(path: string[]) {
@@ -21,7 +24,11 @@ export function allowedPath(path: string[]) {
     ALLOWED_PATHS.has(normalized) ||
     /^orders\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\/(fill|cancel)$/i.test(
       normalized,
-    )
+    ) ||
+    /^prediction\/orders\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\/(fill|cancel)$/i.test(
+      normalized,
+    ) ||
+    /^prediction\/markets\/(demo-launch|demo-rain)\/settle$/.test(normalized)
   );
 }
 
@@ -95,7 +102,10 @@ export async function proxy(
     return Response.json({ error: "Origin not allowed" }, { status: 403 });
   if (
     isMutation &&
-    path.join("/") === "orders" &&
+    (["orders", "prediction/orders"].includes(path.join("/")) ||
+      /^prediction\/markets\/(demo-launch|demo-rain)\/settle$/.test(
+        path.join("/"),
+      )) &&
     request.headers.get("content-type")?.split(";")[0] !== "application/json"
   )
     return Response.json({ error: "JSON required" }, { status: 415 });
