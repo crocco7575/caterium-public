@@ -2,6 +2,8 @@
 
 The tests focus on correctness at boundaries: HTTP input, transactional service behavior, persistent accounting, retries, and streaming—not on producing a large test count.
 
+Find the code in **[backend/tests](../backend/tests/)** and **[frontend/tests](../frontend/tests/)**. Hosted runs are under **[GitHub Actions](https://github.com/crocco7575/caterium-public/actions)**. The workflow has separate backend, PostgreSQL, frontend, and publication jobs.
+
 ## Backend
 
 ```bash
@@ -53,7 +55,9 @@ npm run build
 
 A successful build is not a browser test. The verification record separately reports the actual local browser flow and any limits. For a manual check, submit → fill → inspect the position, submit → cancel → inspect released funds, and try an unsupported sale. Open a second tab to observe event-driven refresh. Stop the backend to check that the UI does not pretend stale data is a healthy connection.
 
-Also switch to Prediction markets: submit YES and NO contracts, fill one, leave another pending, choose a simulated result, and inspect payout and released cash. Refresh and verify settlement is preserved. Repeat with the other fictional market/outcome to check a losing position. Confirm the equity balance is unchanged. Use a fresh disposable database for another scenario rather than resetting stored history.
+Open `/kalshi`: run each example strategy, select its saved run, inspect filled/unfilled/skipped filters, and compare the curve and totals with the ledger. Open Alerts and confirm previews cannot be sent. Refresh to verify persistence. Check a transport failure preserves the original test key and payload; a definitive failure should clear it. Test at desktop and 320px mobile widths. The lower-level prediction settlement API still has independent accounting tests, but no manual order ticket is displayed on the Kalshi page.
+
+Paper fixture tests check exact wins/losses, P&L, maximum drawdown, null unfilled P&L, assumed-fill separation, idempotency, strict input, bounded history responses, migrations, and no account mutation. They validate software arithmetic, not strategy profitability.
 
 ## Publication hygiene
 

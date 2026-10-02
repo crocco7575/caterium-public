@@ -20,6 +20,8 @@ from app.models import (
     PredictionOrder,
     PredictionPosition,
 )
+from app.paper_service import dashboard as paper_dashboard_data
+from app.paper_service import run as run_paper_strategy
 from app.prediction_service import PREDICTION_ACCOUNT_ID
 from app.prediction_service import cancel as prediction_cancel
 from app.prediction_service import fill as prediction_fill
@@ -32,6 +34,9 @@ from app.schemas import (
     EventOut,
     OrderIn,
     OrderOut,
+    PaperDashboardOut,
+    PaperRunIn,
+    PaperRunOut,
     PositionOut,
     PredictionAccountOut,
     PredictionDashboardOut,
@@ -209,6 +214,27 @@ def run_strategy(
         return OrderOut.model_validate(submit(db, EXAMPLE_STRATEGY.propose(), idempotency_key))
     except ValueError as e:
         raise HTTPException(409, str(e)) from e
+
+
+@app.get("/api/v1/paper/dashboard", response_model=PaperDashboardOut)
+def paper_dashboard(db: Session = Depends(get_db)) -> PaperDashboardOut:
+    return PaperDashboardOut.model_validate(paper_dashboard_data(db))
+
+
+@app.post("/api/v1/paper/runs", response_model=PaperRunOut, status_code=201)
+def create_paper_run(
+    body: PaperRunIn,
+    idempotency_key: str | None = Header(None, alias="Idempotency-Key"),
+    db: Session = Depends(get_db),
+) -> PaperRunOut:
+    if not idempotency_key or not idempotency_key.strip() or len(idempotency_key) > 128:
+        raise HTTPException(422, "Idempotency-Key is required and must be 1-128 characters")
+    try:
+        return PaperRunOut.model_validate(run_paper_strategy(db, body.strategy_id, idempotency_key))
+    except ValueError as exc:
+        if str(exc) == "unknown strategy_id":
+            raise HTTPException(422, str(exc)) from exc
+        raise HTTPException(409, str(exc)) from exc
 
 
 def prediction_dashboard_data(db: Session) -> PredictionDashboardOut:

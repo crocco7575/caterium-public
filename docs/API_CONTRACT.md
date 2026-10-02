@@ -58,4 +58,19 @@ Order: `{id, market_id, outcome: "YES" | "NO", quantity, price, status, rejectio
 
 Position: `{market_id, outcome, quantity, cost_basis, market_value, settled, payout}`. Quantity and cost basis remain inspectable after settlement. Settled market value is zero; payout is already included in cash, avoiding double-counted equity. `realized_pnl` is the sum of settled payouts minus settled cost bases, not a real trading result.
 
-Event: `{id, type, order_id: string | null, market_id: string | null, message, created_at}`. Prediction event IDs are independent of equity event IDs; there is no combined SSE channel. The prediction UI refreshes its persisted dashboard after actions and periodically while visible.
+Event: `{id, type, order_id: string | null, market_id: string | null, message, created_at}`. Prediction event IDs are independent of equity event IDs; there is no combined SSE channel. This lower-level accounting example is API-only; it is not the Kalshi page's workflow.
+
+## Paper strategy testing
+
+These routes power `/kalshi`. They never submit orders, modify accounts, or send email.
+
+- `GET /paper/dashboard`: `{demo: true, mode: "synthetic_fixture", delivery: "preview_only", strategies, runs}`. The two strategy descriptors contain `id`, `name`, and `description`. History returns the latest 20 runs, newest first; storage is not pruned automatically.
+- `POST /paper/runs`: JSON `{strategy_id: "example-yes" | "example-no"}` and `Idempotency-Key` (1–128 nonblank characters). Returns a persisted completed run with HTTP 201. Identical retries return the same run; a changed strategy under the same key returns 409. Invalid or extra fields return 422.
+
+Run: `{id, strategy_id, strategy_name, created_at, fixture_version: "public-v1", status: "COMPLETED", summary, equity, ledger, alerts}`.
+
+Summary includes markets, qualified signals, filled, unfilled, skipped, filled wins/losses, filled win rate (fraction 0–1), filled P&L, separate all-signal assumed-filled P&L, and positive maximum drawdown. **Paper-test amounts use integer cents**, unlike the accounting APIs' decimal-dollar strings. One contract per signal; no fees. The equity array contains cumulative filled P&L by fill index, starting at zero.
+
+Ledger rows contain `{id, market, side, entry_cents, result, status, pnl_cents, reason}`. Status is `FILLED`, `UNFILLED`, or `SKIPPED`; P&L is null for unfilled/skipped rows. These statuses are authored fixture inputs, not inferred exchange execution.
+
+Alerts contain `{id, subject, body, delivery: "preview_only"}` for eligible fixture signals. There is no SMTP transport, recipient configuration, or send endpoint. Run creation and preview storage share one transaction. The UI displays one selected run and the latest available run per strategy; repeat runs do not count as independent samples.

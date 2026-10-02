@@ -62,7 +62,15 @@
 
 **Why:** a winning contract pays a fixed amount and disappears from open portfolio value. Recording outcome, cost basis, payout, pending-order cancellation, and cash together makes those semantics reviewable. Separate demo balances avoid implying a shared Alpaca/Kalshi funding or margin arrangement.
 
-**Tradeoff:** this illustrates settlement accounting, not either provider's API, market mechanics, or profitability. Choosing an outcome makes the displayed gain/loss entirely synthetic. Prediction updates use lightweight visible-tab refreshes; the existing equities SSE channel stays independent.
+**Tradeoff:** this illustrates settlement accounting, not either provider's API, market mechanics, or profitability. Choosing an outcome makes the displayed gain/loss entirely synthetic. This example is now API-only; the Kalshi page centers on paper strategy testing.
+
+## 9. A testing console, not a Kalshi order ticket
+
+**Decision:** provide separate visual workspaces, each modeled on its private counterpart. The Kalshi page runs transparent constant-side strategies over a finite authored fixture and stores completed runs and alert previews.
+
+**Why:** the interface should communicate the actual strategy-testing workflow: inspect decisions, include unfilled rows, keep assumed fills separate, and review notifications. A manual YES/NO purchase form communicated the wrong purpose.
+
+**Tradeoff:** the fixture is not a real-market backtest, and its fill flags are not an execution model. Repeated runs are not additional evidence. Gmail is preview-only; production email delivery and private strategy rules are deliberately absent.
 
 ## Interview guide
 

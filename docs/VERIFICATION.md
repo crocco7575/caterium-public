@@ -2,6 +2,27 @@
 
 Verified on **2026-10-02**. This records checks actually executed during the public demo build, not production guarantees.
 
+## Separate brokerage and Kalshi paper-testing pages
+
+Current local verification after replacing the manual prediction-market UI:
+
+| Check | Observed result |
+| --- | --- |
+| Backend suite | **41 passed, 5 skipped**; **96% statement coverage** |
+| Backend static checks | Ruff and strict mypy passed |
+| Frontend suite | **20 tests passed**; ESLint, TypeScript, and production build passed |
+| Routes | `/` redirects to `/brokerage`; `/brokerage` and `/kalshi` load independently |
+| Paper arithmetic | Both constant-side fixture records, drawdown, zero-origin equity paths, and filled/assumed-filled separation checked |
+| Paper isolation | Running both tests left equity and prediction-account balances, orders, and positions unchanged |
+| Retry in browser | Successful test response deliberately lost; retry used identical payload/key and returned the same run, not an additional run |
+| Brokerage in browser | Submitted and filled one mock order; submitted and cancelled another; holdings and reservations updated |
+| Ledger and alerts | Unfilled filter showed two rows with null P&L; Gmail previews rendered with no send control |
+| Responsive checks | Both pages fit a 320px viewport without page-level horizontal overflow; tables scroll within their panels |
+| Browser checks | Original logo loaded; no framework overlay or browser-reported JavaScript errors in the tested flow |
+| Compose | Configuration validation passed without starting Docker |
+
+Only disposable local synthetic state was used. No server, real brokerage, exchange, or email service was contacted. The five database-specific tests were skipped locally; hosted PostgreSQL results must be checked in the matching [Actions run](https://github.com/crocco7575/caterium-public/actions). Below are historical verification records for the earlier interfaces, not the current UI workflow.
+
 ## Equities and prediction-market expansion
 
 The updated application was rechecked locally with both workspaces enabled:

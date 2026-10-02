@@ -6,7 +6,7 @@ This repository is newly authored using generic engineering patterns. It has no 
 
 The original Caterium logo is included with the owner's explicit approval. Its pixels are unchanged; embedded text and EXIF metadata have been removed. No other private assets are included.
 
-The public scope is a local synthetic equities and prediction-market demonstration. It cannot execute a real trade. The broader Caterium platform includes an equities brokerage layer built on Alpaca and prediction-market tools for Kalshi; neither provider's production integration is included here. The YES/NO example uses fictional markets, fixed prices, no fees, and user-selected outcomes. Proprietary implementations remain excluded.
+The public scope is a local synthetic equities and paper strategy-testing demonstration. It cannot execute a real trade or send email. The broader Caterium platform includes an equities brokerage layer built on Alpaca, strategy research and paper monitoring for Kalshi, and Gmail/SMTP paper-trade alerts; none of those production integrations is included here. Private interfaces were inspected read-only for their visual hierarchy and styling, not copied as source. Public layouts, fixtures, and test implementations are newly authored. The lower-level YES/NO settlement example remains API-only. Proprietary implementations remain excluded.
 
 ## Review before sharing
 

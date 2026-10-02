@@ -13,6 +13,7 @@ This newly authored public demo illustrates generic patterns from Caterium's equ
 | FastAPI routes | Validate inputs and map service errors to HTTP | Strategy decisions or browser state |
 | Order service | Enforce transitions, reserve resources, commit accounting | Real exchange connectivity |
 | Prediction service | Buy YES/NO contracts, reserve cash, settle fictional outcomes once | Real markets, exchange rules, research or fees |
+| Paper fixture service | Score two constant-side examples; persist run, ledger, curve, and email previews | Account mutations, real strategy research, email delivery |
 | Strategy interface | Produce a request compatible with the service | Private models or signals |
 | MockBroker | Fixed fictional prices for explicit full fills | Market microstructure or realistic execution |
 | PostgreSQL | Orders, account, inventory, durable event log | In-memory UI projections |
@@ -44,7 +45,15 @@ For BUY orders, available cash is `cash − reserved_cash`. For SELL orders, ava
 
 Serializing mutations on their demo account is intentionally conservative. Equity and prediction balances are separate; this is not a shared-margin portfolio. It makes correctness visible but is not a high-throughput execution design. SQLite is a local convenience and test option; it does not provide PostgreSQL row-lock semantics.
 
-## Prediction-market settlement
+## Two interfaces, different workflows
+
+`/brokerage` recreates the private brokerage's black-and-gold overview with mock orders, holdings, and account state. `/kalshi` recreates the dark-green paper console with strategy tests, decisions, ledgers, and alert previews. `/` redirects to `/brokerage`. Layout and styling were observed read-only; component implementations and fixture data are newly authored. Only the approved Caterium logo is reused.
+
+The paper-testing service scores 12 authored markets using constant YES/NO examples and predetermined fill/skip flags. It persists an immutable completed run with integer-cent calculations in its own table. It never calls either order service or moves account cash. The latest 20 runs are returned; the UI selects one run instead of adding reruns into a cumulative performance claim. An idempotency key prevents ambiguous-response retries from creating duplicate runs.
+
+The private platform's Gmail/SMTP notifier sends paper-trade details and records sent IDs to suppress duplicates. The public service stores **preview-only** message text alongside each run. No mail transport, credentials, recipients, or delivery process is included.
+
+## Prediction-market settlement (API-only example)
 
 The prediction workspace has a separate $1,000 synthetic account and its own market, order, fill, position, and event records. Only purchases are supported. Quotes are authored constants; the browser cannot supply a fill price.
 
@@ -60,7 +69,7 @@ Events commit with the state they describe. The SSE endpoint reads small, ordere
 
 This is an at-least-once presentation channel, not an exactly-once message bus. The demo has no independent outbox publisher, external event broker, durable subscriber offsets, event-retention policy, or multi-account ordering guarantee. In particular, this design should not be extrapolated to concurrent multi-account production streams without addressing commit-order versus sequence-order behavior.
 
-The SSE channel belongs to the equities demo. Prediction events are a separate persisted log; that workspace refreshes its dashboard after mutations and periodically while visible. It does not claim a shared event sequence or real-time exchange feed.
+The SSE channel belongs to the equities demo. Prediction events are a separate persisted API log. The Kalshi testing page refreshes saved runs after a test or a manual refresh; it does not claim a shared event sequence, background runner, or real-time exchange feed.
 
 ## Deployment and trust boundary
 

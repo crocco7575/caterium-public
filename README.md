@@ -5,8 +5,8 @@
 <h1 align="center">Caterium</h1>
 
 <p align="center">
-  An Alpaca-based equities brokerage and Kalshi trading workspace.<br />
-  Backtest ideas. Paper trade. Track orders, portfolios, and performance.
+  An Alpaca-based equities brokerage. A Kalshi strategy-testing workspace.<br />
+  Research ideas. Run paper tests. Track performance. Get Gmail alerts.
 </p>
 
 <p align="center">
@@ -14,41 +14,46 @@
   <a href="#a-three-minute-tour">Take the tour</a> ·
   <a href="docs/ARCHITECTURE.md">Architecture</a> ·
   <a href="docs/TESTING.md">Tests</a> ·
+  <a href="https://github.com/crocco7575/caterium-public/actions">CI results</a> ·
   <a href="docs/DESIGN_DECISIONS.md">Design decisions</a>
 </p>
 
 ---
 
-**Caterium combines an Alpaca-based equities brokerage with Kalshi prediction-market research and trading tools.** It backtests strategy ideas, runs paper-trading experiments, tracks orders and fills, and monitors positions, P&L, strategy performance, and system health.
+**Caterium combines an Alpaca-based equities brokerage with a Kalshi strategy research and paper-testing platform.** The brokerage tracks accounts, orders, fills, positions, and portfolio performance. The Kalshi workspace tests strategy ideas, follows paper signals through filled and unfilled outcomes, and monitors results and system health. Gmail alerts surface new paper trades so they can be reviewed without watching the dashboard all day.
 
-**This repository is the public engineering demo—not the full platform.** Try equities orders, YES/NO contracts, portfolio updates, and settlement using fictional data. The demo does not connect to Alpaca or Kalshi; production adapters, backtesting and research engines, private strategies, credentials, execution logic, and real results stay private.
+**This repository is the public engineering demo—not the full platform.** It recreates the two interfaces with fictional data: mock equity orders on one page, saved sample strategy tests and email previews on the other. It does not connect to Alpaca, Kalshi, or Gmail. Production adapters, research engines, private strategies, credentials, execution logic, and real results stay private.
 
-![Running Caterium public dashboard with synthetic orders and balances](docs/assets/dashboard.png)
+![Black-and-gold Caterium brokerage dashboard with synthetic balances](docs/assets/dashboard.png)
 
-<sub>Captured from the running local demo after a mock fill and cancellation. All visible data is synthetic.</sub>
+<sub>Brokerage — recreated from the private interface's layout and visual style, using only synthetic demo state.</sub>
 
 ### Two workspaces
 
-| Equities | Prediction markets |
+| Brokerage · `/brokerage` | Kalshi paper testing · `/kalshi` |
 | --- | --- |
-| Brokerage-style BUY/SELL orders | Kalshi-style YES/NO contracts |
-| Reserve cash or shares; fill or cancel | Reserve cash; fill or cancel |
-| Track holdings and order events | Choose a fictional outcome and see settlement |
-| $10,000 fictional starting balance | Separate $1,000 fictional starting balance |
+| Black-and-gold portfolio overview | Dark-green paper-testing console |
+| Mock BUY/SELL, reservations, fills, cancellations | Run two transparent example strategies over 12 invented markets |
+| Accounts, positions, orders, and streamed events | Compare results, inspect decisions, review filled/unfilled rows |
+| $10,000 fictional starting balance | Saved runs, calculated curves, and Gmail message previews |
 
-These are independent demo balances, not connected accounts. The prediction-market example is deliberately simplified: fixed prices, buy-only contracts, no fees, and manual outcomes—not a replica of either provider's API or execution rules.
+The Kalshi page is for **testing and monitoring strategies, not submitting exchange orders**. Its examples always choose YES or always choose NO; authored fill flags and outcomes make the arithmetic inspectable. One contract per signal, zero fees, no market realism. Repeating a test does not create new evidence.
 
-![Kalshi-style prediction-market demo with fictional contracts and settlement](docs/assets/prediction-markets.png)
+![Dark-green Caterium Kalshi console showing a synthetic paper strategy test](docs/assets/prediction-markets.png)
 
-<sub>The prediction workspace after a manually chosen outcome. All prices, balances, and P&L are synthetic.</sub>
+<sub>Kalshi — synthetic paper-test results, not actual strategy performance. No manual order ticket or live execution controls.</sub>
+
+### Gmail alerts
+
+In the private platform, a new paper trade can trigger a Gmail/SMTP email with its strategy, market, side, limit price, requested size, and fill-support details. A stored alert ledger suppresses repeat notifications, and delivery failures are reported. The public **Alerts** tab demonstrates the message workflow with previews only: no Gmail login, credentials, or outbound mail.
 
 ## At a glance
 
 | Layer | What you can inspect |
 | --- | --- |
-| **Interface** | Next.js / React / TypeScript dashboard; real API state, accessible forms, streamed events |
+| **Interface** | Two Next.js / React / TypeScript pages; API-backed state, accessible controls, streamed equity events |
 | **API** | FastAPI, Pydantic request validation, versioned routes, idempotent mutations |
-| **Domain** | Equity orders, YES/NO contracts, cash and inventory reservations, mock fills, and atomic settlement |
+| **Domain** | Equity order lifecycle, deterministic paper-test scoring, filled versus assumed-filled records, alert previews; separate settlement API example |
 | **Persistence** | SQLAlchemy 2, PostgreSQL, Alembic migrations, transactional domain events |
 | **Verification** | pytest, isolated databases, Ruff, mypy, ESLint, TypeScript, CI jobs |
 | **Development** | Docker Compose, locked dependencies, synthetic fixtures, no brokerage account required |
@@ -89,15 +94,16 @@ Prefer not to run containers? See the [two-terminal setup](docs/DEVELOPMENT.md) 
 5. **Run ExampleStrategy**. It proposes one fixed demonstration order through the same validation path.
 6. **Watch the event stream** in another tab. Reconnects replay committed events with monotonically increasing IDs.
 
-Then switch to **Prediction markets**:
+Then open **Kalshi**:
 
-1. Buy 10 YES contracts for the fictional rocket launch at 40¢ each. The demo reserves $4.
-2. Fill the order. Your cash decreases by $4 and you hold 10 contracts.
-3. Submit another order without filling it, then simulate a YES outcome.
-4. Settlement cancels the pending order, releases its reservation, and pays $10 for the winning holdings. The $6 gain is fictional arithmetic, not a trading result.
-5. Refresh: the outcome and payout persist. Retrying settlement cannot pay twice.
+1. Run **Example Always YES** against the 12-market synthetic fixture.
+2. Inspect the record, calculated equity curve, and maximum drawdown.
+3. In **Trades**, filter filled, unfilled, and skipped rows. Assumed-filled P&L is separate from fixture-filled P&L.
+4. In **Strategies**, inspect why every row filled, remained unfilled, or was skipped.
+5. Open **Alerts** to preview the paper-trade emails. Nothing is sent.
+6. Run **Example Always NO** and use the run selector to compare. Refreshing preserves completed runs; reruns are not added together.
 
-Choose NO instead to see a losing YES position, or buy NO contracts to explore the other side. Settlement is final for that fictional market; a restart does not reset it. All displayed P&L is synthetic and manually determined—not evidence of an investment edge.
+All results are authored-fixture arithmetic, not a backtest on real markets or evidence of an investment edge. The lower-level YES/NO settlement example remains available through the documented API, not as the Kalshi page's workflow.
 
 ## Architecture
 
@@ -109,6 +115,8 @@ flowchart LR
     Example[ExampleStrategy interface] --> Service
     Service --> Broker["MockBroker<br/>fixed synthetic quotes"]
     API --> Prediction["YES/NO orders and settlement<br/>separate demo account"]
+    API --> Paper["Synthetic strategy tests<br/>ledger · curve · alert previews"]
+    Paper --> DB
     Prediction -->|one transaction| DB
     Service -->|one transaction| DB[("PostgreSQL<br/>orders · cash · positions · events")]
     DB --> Stream[Bounded event reader]
@@ -116,7 +124,7 @@ flowchart LR
     Proxy -->|live updates| UI
 ```
 
-The backend owns both state machines. The frontend does not infer fills or recalculate authoritative balances. Equities events are streamed through SSE; prediction-market activity refreshes from persisted state after actions and periodically while visible.
+The backend owns accounting and sample-test scoring. The frontend does not invent fills or authoritative balances. Equities events stream through SSE; the Kalshi page reads saved runs after actions or an explicit refresh. There is no hidden research worker or background trading process.
 
 ### Engineering highlights
 
@@ -131,6 +139,8 @@ The backend owns both state machines. The frontend does not infer fills or recal
 Read [the architecture](docs/ARCHITECTURE.md) for transaction boundaries and [the decisions](docs/DESIGN_DECISIONS.md) for the compromises—including what SQLite tests do **not** prove about PostgreSQL concurrency.
 
 ## Testing is part of the design
+
+**[Backend test suite](backend/tests/) · [Frontend test suite](frontend/tests/) · [GitHub Actions results](https://github.com/crocco7575/caterium-public/actions)**
 
 Backend tests exercise the HTTP boundary, service behavior, persistence, and failure paths against isolated synthetic data. Frontend checks validate lint, types, and the production build. CI also uses an isolated PostgreSQL service.
 

@@ -151,6 +151,8 @@ class PredictionEventOut(BaseModel):
     @field_validator("created_at", mode="before")
     @classmethod
     def utc_timestamp(cls, value: datetime) -> datetime:
+        if isinstance(value, str):
+            value = datetime.fromisoformat(value.replace("Z", "+00:00"))
         return value.replace(tzinfo=UTC) if value.tzinfo is None else value.astimezone(UTC)
 
 
@@ -162,3 +164,79 @@ class PredictionDashboardOut(BaseModel):
     positions: list[PredictionPositionOut]
     events: list[PredictionEventOut]
     realized_pnl: Decimal
+
+
+class PaperRunIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    strategy_id: Literal["example-yes", "example-no"]
+
+
+class PaperSummaryOut(BaseModel):
+    markets: int
+    signals: int
+    filled: int
+    unfilled: int
+    skipped: int
+    wins: int
+    losses: int
+    win_rate: float | None
+    pnl_cents: int
+    all_signal_pnl_cents: int
+    max_drawdown_cents: int
+
+
+class PaperEquityOut(BaseModel):
+    index: int
+    pnl_cents: int
+
+
+class PaperLedgerOut(BaseModel):
+    id: str
+    market: str
+    side: Literal["YES", "NO"]
+    entry_cents: int
+    result: Literal["YES", "NO"]
+    status: Literal["FILLED", "UNFILLED", "SKIPPED"]
+    pnl_cents: int | None
+    reason: str
+
+
+class PaperAlertOut(BaseModel):
+    id: str
+    subject: str
+    body: str
+    delivery: Literal["preview_only"]
+
+
+class PaperRunOut(BaseModel):
+    id: str
+    strategy_id: Literal["example-yes", "example-no"]
+    strategy_name: str
+    created_at: datetime
+    fixture_version: Literal["public-v1"]
+    status: Literal["COMPLETED"]
+    summary: PaperSummaryOut
+    equity: list[PaperEquityOut]
+    ledger: list[PaperLedgerOut]
+    alerts: list[PaperAlertOut]
+
+    @field_validator("created_at", mode="before")
+    @classmethod
+    def utc_timestamp(cls, value: datetime) -> datetime:
+        if isinstance(value, str):
+            value = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        return value.replace(tzinfo=UTC) if value.tzinfo is None else value.astimezone(UTC)
+
+
+class PaperStrategyOut(BaseModel):
+    id: str
+    name: str
+    description: str
+
+
+class PaperDashboardOut(BaseModel):
+    demo: Literal[True]
+    mode: Literal["synthetic_fixture"]
+    delivery: Literal["preview_only"]
+    strategies: list[PaperStrategyOut]
+    runs: list[PaperRunOut]

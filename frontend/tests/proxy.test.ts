@@ -31,6 +31,34 @@ describe("proxy guards", () => {
     expect(allowedPath(["orders", orderId, "fill"])).toBe(true);
     expect(allowedPath(["orders", "not-an-id", "fill"])).toBe(false);
     expect(allowedPath(["private", "config"])).toBe(false);
+    expect(allowedPath(["paper", "dashboard"])).toBe(true);
+    expect(allowedPath(["paper", "runs"])).toBe(true);
+    expect(allowedPath(["paper", "send-email"])).toBe(false);
+  });
+
+  it("guards paper tests with origin, JSON, and bounded body checks", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    const options = { method: "POST", body: "{}" };
+    const missingOrigin = await POST(
+      request("/api/v1/paper/runs", options),
+      context(["paper", "runs"]),
+    );
+    const missingJson = await POST(
+      request("/api/v1/paper/runs", { ...options, headers: origin }),
+      context(["paper", "runs"]),
+    );
+    const oversized = await POST(
+      request("/api/v1/paper/runs", {
+        ...options,
+        headers: { ...origin, "content-type": "application/json" },
+        body: "x".repeat(4097),
+      }),
+      context(["paper", "runs"]),
+    );
+    expect(missingOrigin.status).toBe(403);
+    expect(missingJson.status).toBe(415);
+    expect(oversized.status).toBe(413);
+    expect(fetchSpy).not.toHaveBeenCalled();
   });
 
   it("rejects mutation methods and remote origins before upstream fetch", async () => {

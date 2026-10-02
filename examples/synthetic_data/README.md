@@ -16,4 +16,6 @@ These symbols and prices are not market observations. Filling at a fixed quote d
 
 These are not listed exchange contracts. The user manually selects an outcome to exercise settlement: winning contracts pay `1.00` each, losing contracts pay zero, and pending orders are cancelled. Any resulting P&L is fictional and cannot validate a strategy. Restarting preserves state rather than replenishing funds or reopening markets.
 
-Tests construct their own isolated fixtures from scratch. The dashboard reads the running demo database; it does not fall back to fabricated success data if the API is unavailable.
+The settlement example above is API-only. The `/kalshi` page instead scores `public-v1`: 12 authored markets, two constant-side example strategies, one contract per qualified signal, zero fees, two skipped input rows, and two unfilled rows. All outcomes and fill flags are explicit constants in `app/paper_service.py`, not observations. Filled P&L and assumed-filled P&L remain separate. Email previews are generated from eligible rows and never sent. Runs persist independently and must not be summed as independent evidence.
+
+Tests construct their own isolated fixtures from scratch. Both pages read the running demo database; neither falls back to fabricated success data if the API is unavailable.

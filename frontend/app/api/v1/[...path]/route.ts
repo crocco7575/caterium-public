@@ -16,6 +16,8 @@ const ALLOWED_PATHS = new Set([
   "prediction/dashboard",
   "prediction/markets",
   "prediction/orders",
+  "paper/dashboard",
+  "paper/runs",
 ]);
 
 export function allowedPath(path: string[]) {
@@ -102,7 +104,7 @@ export async function proxy(
     return Response.json({ error: "Origin not allowed" }, { status: 403 });
   if (
     isMutation &&
-    (["orders", "prediction/orders"].includes(path.join("/")) ||
+    (["orders", "prediction/orders", "paper/runs"].includes(path.join("/")) ||
       /^prediction\/markets\/(demo-launch|demo-rain)\/settle$/.test(
         path.join("/"),
       )) &&
