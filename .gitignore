@@ -1,0 +1,40 @@
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Python / local databases / test artifacts
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage*
+htmlcov/
+coverage.xml
+*.db
+*.sqlite*
+
+# Frontend / generated outputs
+node_modules/
+.next/
+out/
+dist/
+coverage/
+playwright-report/
+test-results/
+*.tsbuildinfo
+next-env.d.ts
+
+# Editor and OS files
+.DS_Store
+.idea/
+.vscode/
+*.log
+tmp/

@@ -1,0 +1,219 @@
+import asyncio
+import json
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
+from fastapi import Depends, FastAPI, Header, HTTPException, Request, status
+from fastapi.responses import StreamingResponse
+from sqlalchemy import select, text
+from sqlalchemy.orm import Session
+
+from app.db import SessionLocal, get_db
+from app.models import Account, Event, Order, Position
+from app.schemas import (
+    AccountOut,
+    DashboardOut,
+    EventOut,
+    OrderIn,
+    OrderOut,
+    PositionOut,
+    StrategyOut,
+)
+from app.service import ACCOUNT_ID, broker, cancel, fill, seed, submit
+from app.strategy import ExampleStrategy
+
+EXAMPLE_STRATEGY = ExampleStrategy()
+STRATEGY = EXAMPLE_STRATEGY.descriptor
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    with SessionLocal() as db:
+        seed(db)
+    yield
+
+
+app = FastAPI(title="Caterium Public Demo", version="1.0", lifespan=lifespan)
+
+
+def format_sse(event: str, payload: dict[str, object], event_id: int | None = None) -> str:
+    identifier = f"id: {event_id}\n" if event_id is not None else ""
+    return f"event: {event}\n{identifier}data: {json.dumps(payload)}\n\n"
+
+
+def stream_events(db: Session, cursor: int, limit: int = 25) -> list[Event]:
+    return list(
+        db.scalars(select(Event).where(Event.id > cursor).order_by(Event.id).limit(limit)).all()
+    )
+
+
+def account_out(db: Session) -> AccountOut:
+    a = db.get(Account, ACCOUNT_ID)
+    assert a
+    positions = db.scalars(select(Position)).all()
+    equity = a.cash + sum(
+        (p.quantity * broker.quote(p.symbol) for p in positions), start=a.reserved_cash * 0
+    )
+    return AccountOut(
+        id=a.id,
+        cash=a.cash,
+        reserved_cash=a.reserved_cash,
+        available_cash=a.cash - a.reserved_cash,
+        equity=equity,
+        currency=a.currency,
+    )
+
+
+def position_out(p: Position) -> PositionOut:
+    price = broker.quote(p.symbol)
+    return PositionOut(
+        symbol=p.symbol,
+        quantity=p.quantity,
+        reserved_quantity=p.reserved_quantity,
+        average_price=p.average_price,
+        market_price=price,
+        market_value=p.quantity * price,
+    )
+
+
+def fail(exc: Exception) -> HTTPException:
+    if isinstance(exc, KeyError):
+        return HTTPException(404, "order not found")
+    return HTTPException(409, str(exc))
+
+
+@app.get("/api/v1/health")
+def health(db: Session = Depends(get_db)) -> dict[str, object]:
+    try:
+        db.execute(text("SELECT 1"))
+        return {"status": "ok", "demo": True, "database": "ok"}
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="database unavailable"
+        ) from None
+
+
+@app.get("/api/v1/account", response_model=AccountOut)
+def account(db: Session = Depends(get_db)) -> AccountOut:
+    return account_out(db)
+
+
+@app.get("/api/v1/positions", response_model=list[PositionOut])
+def positions(db: Session = Depends(get_db)) -> list[PositionOut]:
+    return [
+        position_out(p)
+        for p in db.scalars(select(Position)).all()
+        if p.quantity or p.reserved_quantity
+    ]
+
+
+@app.get("/api/v1/orders", response_model=list[OrderOut])
+def orders(db: Session = Depends(get_db)) -> list[OrderOut]:
+    return [
+        OrderOut.model_validate(order)
+        for order in db.scalars(select(Order).order_by(Order.created_at.desc()).limit(100)).all()
+    ]
+
+
+@app.get("/api/v1/events", response_model=list[EventOut])
+def events(db: Session = Depends(get_db)) -> list[EventOut]:
+    return [
+        EventOut.model_validate(event)
+        for event in db.scalars(select(Event).order_by(Event.id.desc()).limit(50)).all()
+    ]
+
+
+@app.get("/api/v1/strategies", response_model=list[StrategyOut])
+def strategies() -> list[StrategyOut]:
+    return [STRATEGY]
+
+
+@app.get("/api/v1/dashboard")
+def dashboard(db: Session = Depends(get_db)) -> DashboardOut:
+    return DashboardOut(
+        demo=True,
+        account=account_out(db),
+        positions=[
+            position_out(p)
+            for p in db.scalars(select(Position)).all()
+            if p.quantity or p.reserved_quantity
+        ],
+        orders=orders(db),
+        events=events(db),
+        strategy=STRATEGY,
+    )
+
+
+@app.post("/api/v1/orders", response_model=OrderOut, status_code=201)
+def create_order(
+    body: OrderIn,
+    idempotency_key: str | None = Header(None, alias="Idempotency-Key"),
+    db: Session = Depends(get_db),
+) -> OrderOut:
+    if not idempotency_key or not idempotency_key.strip() or len(idempotency_key) > 128:
+        raise HTTPException(422, "Idempotency-Key is required and must be 1-128 characters")
+    try:
+        return OrderOut.model_validate(submit(db, body, idempotency_key))
+    except ValueError as e:
+        raise HTTPException(409, str(e)) from e
+
+
+@app.post("/api/v1/orders/{order_id}/fill", response_model=OrderOut)
+def fill_order(order_id: str, db: Session = Depends(get_db)) -> OrderOut:
+    try:
+        return OrderOut.model_validate(fill(db, order_id))
+    except (KeyError, ValueError) as e:
+        raise fail(e) from e
+
+
+@app.post("/api/v1/orders/{order_id}/cancel", response_model=OrderOut)
+def cancel_order(order_id: str, db: Session = Depends(get_db)) -> OrderOut:
+    try:
+        return OrderOut.model_validate(cancel(db, order_id))
+    except (KeyError, ValueError) as e:
+        raise fail(e) from e
+
+
+@app.post("/api/v1/strategies/example/run", response_model=OrderOut, status_code=201)
+def run_strategy(
+    idempotency_key: str | None = Header(None, alias="Idempotency-Key"),
+    db: Session = Depends(get_db),
+) -> OrderOut:
+    if not idempotency_key or not idempotency_key.strip() or len(idempotency_key) > 128:
+        raise HTTPException(422, "Idempotency-Key is required")
+    try:
+        return OrderOut.model_validate(submit(db, EXAMPLE_STRATEGY.propose(), idempotency_key))
+    except ValueError as e:
+        raise HTTPException(409, str(e)) from e
+
+
+@app.get("/api/v1/events/stream")
+async def event_stream(
+    request: Request, last_event_id: str | None = Header(None, alias="Last-Event-ID")
+) -> StreamingResponse:
+    try:
+        cursor = min(2_147_483_647, max(0, int(last_event_id or "0")))
+    except ValueError:
+        cursor = 0
+
+    async def gen() -> AsyncIterator[str]:
+        nonlocal cursor
+        for _ in range(30):
+            if await request.is_disconnected():
+                break
+            with SessionLocal() as db:
+                rows = stream_events(db, cursor)
+            if rows:
+                for event in rows:
+                    payload = EventOut.model_validate(event).model_dump(mode="json")
+                    cursor = event.id
+                    yield format_sse("domain", payload, event.id)
+            else:
+                yield format_sse("heartbeat", {})
+            await asyncio.sleep(1)
+
+    return StreamingResponse(
+        gen(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
