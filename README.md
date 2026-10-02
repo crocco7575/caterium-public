@@ -50,6 +50,13 @@ docker compose up --build
 
 Open **[localhost:3000](http://localhost:3000)**. Interactive API documentation is at **[localhost:8000/docs](http://localhost:8000/docs)**.
 
+To obtain the source first:
+
+```bash
+git clone https://github.com/crocco7575/caterium-public.git
+cd caterium-public
+```
+
 Compose starts PostgreSQL, applies the schema migration, seeds one synthetic account, and starts the API and dashboard. The `.env.example` values are deliberately fake local defaults; no configuration or real credentials are required. Ports bind to loopback, and the database has no published port.
 
 To stop while keeping your demo data:
@@ -133,7 +140,7 @@ docker compose config --quiet
 
 [Testing guide →](docs/TESTING.md) · [Local verification record →](docs/VERIFICATION.md)
 
-GitHub Actions is configured in [`.github/workflows/ci.yml`](.github/workflows/ci.yml). This repository does not claim a hosted CI run before it has actually been pushed and run. There is no automatic deployment job.
+GitHub Actions is configured in [`.github/workflows/ci.yml`](.github/workflows/ci.yml). Check the [actual workflow results](https://github.com/crocco7575/caterium-public/actions) for the current commit; configuration alone does not establish that checks passed. There is no automatic deployment job.
 
 ## Repository map
 

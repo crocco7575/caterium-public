@@ -17,7 +17,7 @@ The public scope is a local synthetic order-lifecycle demonstration. It cannot e
 - Confirm that ignored local databases, environment files, caches, and dependency trees are not staged.
 - Choose a license deliberately if you intend to permit reuse. None is implied by public visibility.
 
-No remote or public publication is part of this delivery. The initial commit is fresh, with neutral demo-only author metadata rather than personal account details.
+Public sharing was explicitly approved after the local review. The public source lives at [caterium-public on GitHub](https://github.com/crocco7575/caterium-public); this does not expose a running application or any production service. The initial commit is fresh, with neutral demo-only author metadata rather than personal account details.
 
 ## Application security boundary
 

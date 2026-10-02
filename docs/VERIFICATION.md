@@ -28,7 +28,7 @@ Verified on **2026-10-02**. This records checks actually executed during the pub
 
 - **Docker images and the full Compose stack were not run.** The Docker daemon was unavailable; it was not started implicitly. Configuration validation and static Dockerfile review are not a successful container build.
 - **Three PostgreSQL concurrency tests were skipped locally.** PostgreSQL was not available. They are configured in a separate disposable PostgreSQL CI job; a SQLite pass does not establish PostgreSQL correctness.
-- **GitHub Actions has not run on GitHub.** No remote was configured and nothing was pushed. Workflow configuration is not a green CI result.
+- **The original local checks did not include GitHub Actions.** Publication was subsequently approved. Consult the [actual workflow runs](https://github.com/crocco7575/caterium-public/actions) for hosted results; workflow configuration alone is not a green CI result.
 - The optional **Codex Security plugin scan did not complete**. It returned `Could not read local file: frontend/.next/server/app/api/v1/'[...path]'` while starting against generated build output. No completed plugin scan or security certification is claimed. The separately executed source-hygiene, dependency, manual, and secret checks above are distinct checks.
 - The backend test client emitted an upstream deprecation warning about its HTTP testing transport. Tests passed; this is a tooling-maintenance item, not silently suppressed evidence.
 
